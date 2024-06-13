@@ -27,15 +27,32 @@
 
         canvas {
             display: block;
-            filter: blur(12px);
         }
 
+        /* editable css */
+        style {
+            /* display: block; */
+            color: white;
+            position: absolute;
+            top: 33px;
+            z-index: 10;
+            font-family: monospace, 'Helvetica', sans-serif;
+        }
     </style>
 </head>
 
 <body>
     <!-- element with audio path preloaded ('/audio.waw') -->
     <input type="file" id="audioInput" accept="audio/*">
+
+    <!-- editable scc -->
+    <style contenteditable>
+        canvas {
+            /* filter: blur(12px) hue-rotate(180deg) invert(0); */
+            filter: blur(5px);
+        }
+    </style>
+
     <script>
         // function preload() {
         //     // Replace 'path/to/your/audiofile.mp3' with the actual path to your audio file
@@ -52,7 +69,7 @@
             audioInput.addEventListener('change', handleFile);
             // alternative preload file ('/audio.waw')
             // audioFile = loadSound('/audio.wav', playSound);
-            
+
         }
 
         function handleFile(event) {
@@ -62,7 +79,7 @@
                 audioFile = loadSound(url, playSound);
                 // alternative preload file ('/audio.waw')
                 // audioFile = loadSound('audio.waw', playSound);
-                
+
             }
         }
 
@@ -92,7 +109,7 @@
         function strikeLightning() {
             let x = random(width);
             let y = 0;
-            let strength = random(1, 5); // random strength for the lightning
+            let strength = random(1, 10); // random strength for the lightning
             lightningStrikes.push(new Lightning(x, y, strength));
         }
 
@@ -119,7 +136,8 @@
             }
 
             show() {
-                stroke(255);
+                // yellowish color for the lightning
+                stroke(255, 255, 200);
                 strokeWeight(this.strength);
                 for (let segment of this.segments) {
                     line(segment.x1, segment.y1, segment.x2, segment.y2);
