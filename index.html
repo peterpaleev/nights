@@ -23,113 +23,195 @@
             height: 100px;
             color: aqua;
             background-color: aqua;
+            display: none;
         }
 
         canvas {
             display: block;
-            filter: blur(12px);
+            /* filter: blur(12px); */
         }
-
+        input {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
     <!-- element with audio path preloaded ('/audio.waw') -->
     <input type="file" id="audioInput" accept="audio/*">
+
+    <input type="checkbox" id="micInputCheckbox"> Enable live mic input
     <script>
-        // function preload() {
-        //     // Replace 'path/to/your/audiofile.mp3' with the actual path to your audio file
-        //     audioFile = loadSound('path/to/your/audiofile.mp3');
-        // }
         let lightningStrikes = [];
         let audioFile;
         let amplitude;
+        let fft;
+        let mic;
+
+        let micInputCheckbox = document.getElementById('micInputCheckbox');
+
+
 
         function setup() {
             createCanvas(windowWidth, windowHeight);
             background(0);
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
-                            // alternative preload file ('/audio.waw')
-            audioFile = loadSound('/audio.wav', playSound);
+            console.log('Audio input event listener added');
 
-            // on load handleFile function will be called
-            
+            audioFile = loadSound('/audio.wav', playSound);
+            console.log('Audio file loaded');
+
+            fft = new p5.FFT();
+            console.log('FFT initialized');
+
+            mic = new p5.AudioIn();
+            mic.start(onMicStarted);
+            console.log('Mic initialized');
         }
 
         function handleFile(event) {
             let file = event.target.files[0];
             if (file) {
                 let url = URL.createObjectURL(file);
-                // audioFile = loadSound(url, playSound);
-                // alternative preload file ('/audio.waw')
-                audioFile = loadSound('audio.waw', playSound);
-                
+                console.log('File selected:', file.name);
+
+                audioFile = loadSound(url, playSound);
+                console.log('Audio file loaded from URL');
             }
         }
 
         function playSound() {
             audioFile.play();
             amplitude = new p5.Amplitude();
+            console.log('Audio file playing');
         }
+
+        function onMicStarted() {
+            amplitude = new p5.Amplitude();
+            amplitude.setInput(mic);
+
+            fft = new p5.FFT();
+            fft.setInput(mic);
+        }
+
 
         function draw() {
             background(0, 25); // semi-transparent background to create a fading effect
 
             if (audioFile && audioFile.isPlaying()) {
+
                 let level = amplitude.getLevel();
-                if (level > 0.1) { // threshold to detect a beat or audio trigger
-                    strikeLightning();
+                let spectrum = fft.analyze();
+                let lowLevel = fft.getEnergy('bass');
+                let midLevel = fft.getEnergy('mid');
+                let highLevel = fft.getEnergy('treble');
+
+                if (micInputCheckbox.checked) {
+                    let level = amplitude.getLevel();
+                    let spectrum = fft.analyze();
+                    let lowLevel = fft.getEnergy('bass');
+                    let midLevel = fft.getEnergy('mid');
+                    let highLevel = fft.getEnergy('treble');
+
+                    console.log('🙂Amplitude level:', level);
+
                 }
-            }
 
-            for (let strike of lightningStrikes) {
-                strike.show();
-            }
 
-            // Remove old lightning strikes
-            lightningStrikes = lightningStrikes.filter(strike => !strike.isDone());
+                console.log('Amplitude level:', level);
+                console.log('Spectrum:', spectrum);
+                console.log('Low level:', lowLevel, 'Mid level:', midLevel, 'High level:', highLevel);
+
+                if (level > 0.01) { // threshold to detect a beat or audio trigger
+                    let brightness = map(level, 0, 1, 50, 255);
+                    let strength = map(highLevel, 0, 255, 2, 5);
+                    let col = color(map(lowLevel, 0, 255, 0, 255), map(midLevel, 0, 255, 0, 255), map(highLevel, 0, 255, 0, 255)); // Renamed 'color' to 'col'
+                    strikeLightning(strength, brightness, col);
+                    console.log('Lightning strike triggered:', { strength, brightness, col });
+                }
+
+                for (let strike of lightningStrikes) {
+                    strike.show();
+                }
+
+                // Remove old lightning strikes
+                lightningStrikes = lightningStrikes.filter(strike => !strike.isDone());
+                console.log('Active lightning strikes:', lightningStrikes.length);
+            }
         }
 
-        function strikeLightning() {
-            let x = random(width);
-            let y = 0;
-            let strength = random(1, 5); // random strength for the lightning
-            lightningStrikes.push(new Lightning(x, y, strength));
+        function strikeLightning(strength, brightness, col) {
+            let lightning = new Lightning(random(width), 0, strength, brightness, col);
+            lightningStrikes.push(lightning);
+            console.log('New lightning created:', lightning);
         }
 
         class Lightning {
-            constructor(x, y, strength) {
+            constructor(x, y, strength, brightness, col) {
                 this.x = x;
                 this.y = y;
                 this.strength = strength;
+                this.brightness = brightness;
+                this.col = col;
                 this.segments = [];
                 this.done = false;
                 this.createStrike();
+                console.log('Lightning initialized:', this);
             }
 
             createStrike() {
-                let currentX = this.x;
-                let currentY = this.y;
-                while (currentY < height) {
-                    let nextX = currentX + random(-this.strength * 10, this.strength * 10);
-                    let nextY = currentY + random(10, 20);
-                    this.segments.push({ x1: currentX, y1: currentY, x2: nextX, y2: nextY });
-                    currentX = nextX;
-                    currentY = nextY;
-                }
+                const createBranch = (x, y, strength, brightness, col) => {
+                    let segments = [];
+                    let currentX = x;
+                    let currentY = y;
+
+                    while (currentY < height && strength > 0) {
+                        let nextX = currentX + random(-strength * 10, strength * 10);
+                        let nextY = currentY + random(10, 20);
+                        segments.push({ x1: currentX, y1: currentY, x2: nextX, y2: nextY, brightness: brightness, col: col });
+
+                        // Randomly decide to create a branch
+                        if (random(1) < 0.3) {
+                            segments = segments.concat(createBranch(nextX, nextY, strength * 0.7, brightness * 0.7, col));
+                        }
+
+                        currentX = nextX;
+                        currentY = nextY;
+                        strength -= 0.1;
+                    }
+
+                    return segments;
+                };
+
+                this.segments = createBranch(this.x, this.y, this.strength, this.brightness, this.col);
+                console.log('Lightning segments created:', this.segments);
             }
 
             show() {
-                stroke(255);
                 strokeWeight(this.strength);
                 for (let segment of this.segments) {
+                    stroke(segment.col.levels[0], segment.col.levels[1], segment.col.levels[2], segment.brightness);
+                    line(segment.x1, segment.y1, segment.x2, segment.y2);
+
+                    // Adding a blur effect
+                    stroke(segment.col.levels[0], segment.col.levels[1], segment.col.levels[2], segment.brightness * 0.5);
+                    strokeWeight(this.strength * 1.5);
+                    line(segment.x1, segment.y1, segment.x2, segment.y2);
+
+                    stroke(segment.col.levels[0], segment.col.levels[1], segment.col.levels[2], segment.brightness * 0.25);
+                    strokeWeight(this.strength * 2);
                     line(segment.x1, segment.y1, segment.x2, segment.y2);
                 }
+
                 this.strength -= 0.1;
                 if (this.strength <= 0) {
                     this.done = true;
                 }
+                console.log('Lightning strike shown:', this);
             }
 
             isDone() {
@@ -137,10 +219,11 @@
             }
         }
 
-        //                     strikeLightning(); on tap
         function mousePressed() {
             strikeLightning();
+            console.log('Mouse pressed, lightning strike triggered');
         }
+
     </script>
 </body>
 

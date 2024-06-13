@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Visualizer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: black;
+        }
+        #canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="audioFile" accept="audio/*">
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let audioContext, analyser, source;
+        let bufferLength, dataArray;
+
+        document.getElementById('audioFile').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    initAudio(e.target.result);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function initAudio(audioData) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext.decodeAudioData(audioData, function(buffer) {
+                if (source) source.disconnect();
+                source = audioContext.createBufferSource();
+                source.buffer = buffer;
+
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+
+                source.start(0);
+                draw();
+            });
+        }
+
+        function draw() {
+            requestAnimationFrame(draw);
+
+            analyser.getByteFrequencyData(dataArray);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawLightning(dataArray);
+        }
+
+        function drawLightning(frequencyData) {
+            const bass = frequencyData.slice(0, bufferLength / 4);
+            const avgBass = bass.reduce((sum, value) => sum + value, 0) / bass.length;
+            const volume = frequencyData.reduce((sum, value) => sum + value, 0) / frequencyData.length;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + (volume / 256) + ')';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+
+            let x = canvas.width / 2;
+            let y = 0;
+            let branchLength = 10 + avgBass / 5;
+
+            while (y < canvas.height) {
+                const angle = (Math.random() - 0.5) * Math.PI / 4;
+                x += branchLength * Math.cos(angle);
+                y += branchLength * Math.sin(angle);
+                ctx.lineTo(x, y);
+
+                if (Math.random() < 0.1) {
+                    drawBranch(x, y, branchLength, angle);
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        function drawBranch(x, y, length, angle) {
+            if (length < 5) return;
+
+            const branchLength = length * 0.7;
+            ctx.moveTo(x, y);
+
+            let newAngle = angle + (Math.random() - 0.5) * Math.PI / 2;
+            let newX = x + branchLength * Math.cos(newAngle);
+            let newY = y + branchLength * Math.sin(newAngle);
+            ctx.lineTo(newX, newY);
+
+            drawBranch(newX, newY, branchLength, newAngle);
+        }
+    </script>
+</body>
+</html>

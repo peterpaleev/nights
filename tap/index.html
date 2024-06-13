@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Strike on Audio Trigger</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: black;
+        }
+
+        #audioInput {
+            position: absolute;
+            color: white;
+            background-color: #0032f5;
+            z-index: 100;
+            top: 48vh;
+        }
+
+        canvas {
+            display: block;
+            filter: blur(12px);
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- element with audio path preloaded ('/audio.waw') -->
+    <input type="file" id="audioInput" accept="audio/*">
+    <script>
+        // function preload() {
+        //     // Replace 'path/to/your/audiofile.mp3' with the actual path to your audio file
+        //     audioFile = loadSound('path/to/your/audiofile.mp3');
+        // }
+        let lightningStrikes = [];
+        let audioFile;
+        let amplitude;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            background(0);
+            let audioInput = document.getElementById('audioInput');
+            audioInput.addEventListener('change', handleFile);
+            // alternative preload file ('/audio.waw')
+            // audioFile = loadSound('/audio.wav', playSound);
+            
+        }
+
+        function handleFile(event) {
+            let file = event.target.files[0];
+            if (file) {
+                let url = URL.createObjectURL(file);
+                audioFile = loadSound(url, playSound);
+                // alternative preload file ('/audio.waw')
+                // audioFile = loadSound('audio.waw', playSound);
+                
+            }
+        }
+
+        function playSound() {
+            audioFile.play();
+            amplitude = new p5.Amplitude();
+        }
+
+        function draw() {
+            background(0, 25); // semi-transparent background to create a fading effect
+
+            if (audioFile && audioFile.isPlaying()) {
+                let level = amplitude.getLevel();
+                if (level > 0.01) { // threshold to detect a beat or audio trigger
+                    strikeLightning();
+                }
+            }
+
+            for (let strike of lightningStrikes) {
+                strike.show();
+            }
+
+            // Remove old lightning strikes
+            lightningStrikes = lightningStrikes.filter(strike => !strike.isDone());
+        }
+
+        function strikeLightning() {
+            let x = random(width);
+            let y = 0;
+            let strength = random(1, 5); // random strength for the lightning
+            lightningStrikes.push(new Lightning(x, y, strength));
+        }
+
+        class Lightning {
+            constructor(x, y, strength) {
+                this.x = x;
+                this.y = y;
+                this.strength = strength;
+                this.segments = [];
+                this.done = false;
+                this.createStrike();
+            }
+
+            createStrike() {
+                let currentX = this.x;
+                let currentY = this.y;
+                while (currentY < height) {
+                    let nextX = currentX + random(-this.strength * 10, this.strength * 10);
+                    let nextY = currentY + random(10, 20);
+                    this.segments.push({ x1: currentX, y1: currentY, x2: nextX, y2: nextY });
+                    currentX = nextX;
+                    currentY = nextY;
+                }
+            }
+
+            show() {
+                stroke(255);
+                strokeWeight(this.strength);
+                for (let segment of this.segments) {
+                    line(segment.x1, segment.y1, segment.x2, segment.y2);
+                }
+                this.strength -= 0.1;
+                if (this.strength <= 0) {
+                    this.done = true;
+                }
+            }
+
+            isDone() {
+                return this.done;
+            }
+        }
+
+        //                     strikeLightning(); on tap
+        function mousePressed() {
+            strikeLightning();
+            // removeFileInput();
+        }
+
+        // when phone shakes remove file input
+        window.addEventListener('devicemotion', function (event) {
+            if (event.acceleration.x > 10 || event.acceleration.y > 10 || event.acceleration.z > 10) {
+                removeFileInput();
+            }
+        });
+
+        function removeFileInput() {
+            let audioInput = document.getElementById('audioInput');
+            // smooth fade out effect with css
+            audioInput.style.transition = 'opacity 1s';
+            audioInput.style.opacity = 0;
+
+        }
+
+    </script>
+</body>
+
+</html>
