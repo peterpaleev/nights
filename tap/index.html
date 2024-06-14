@@ -80,9 +80,9 @@
         <label for="randomnessSlider">Randomness:</label>
         <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
         <label for="minFreqSlider">Min Frequency:</label>
-        <input type="range" id="minFreqSlider" min="20" max="20000" value="20"><br>
+        <input type="range" id="minFreqSlider" min="22" max="19000" value="22"><br>
         <label for="maxFreqSlider">Max Frequency:</label>
-        <input type="range" id="maxFreqSlider" min="20" max="20000" value="20000"><br>
+        <input type="range" id="maxFreqSlider" min="22" max="19000" value="19000"><br>
         <button id="startRecordingButton">Start Recording</button>
         <button id="stopRecordingButton" disabled>Stop Recording</button>
     </div>
@@ -158,8 +158,10 @@
 
             if (audioFile && audioFile.isPlaying()) {
                 fft.analyze();
-                let minFreq = minFreqSlider.value;
-                let maxFreq = maxFreqSlider.value;
+                                //convert to number
+                let minFreq = Number(minFreqSlider.value);
+                let maxFreq = Number(maxFreqSlider.value);
+                console.log(minFreq, maxFreq);
                 let level = fft.getEnergy(minFreq, maxFreq);
                 if (level > sensitivitySlider.value * 255) {
                     strikeLightning();
