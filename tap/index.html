@@ -64,7 +64,7 @@
 </head>
 
 <body>
-    <input type="file" id="audioInput" accept="audio/*">
+    <input style="display: none;" type="file" id="audioInput" accept="audio/*">
 
     <div id="controls">
         <label for="strengthSlider">Strength:</label>
@@ -128,9 +128,9 @@
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
 
-            audioFile = loadSound('/nights/audio.mp3', playSound);
-                console.log('Audio file loaded');
-                console.log('audioFile', audioFile);
+            audioFile = loadSound('audio.mp3', playSound);
+            console.log('Audio file loaded');
+            console.log('audioFile', audioFile);
 
 
             let removeButton = document.getElementById('removeButton');
@@ -144,20 +144,8 @@
 
             fft = new p5.FFT(0.8, 1024);
 
-                // Create a button to play the sound
-    let playButton = createButton('Play Sound');
-    //left 20 bottom 20 
-    playButton.position(20);
-    playButton.mousePressed(
-        function() {
-            if (audioFile) {
-            audioFile.play();
-            amplitude = new p5.Amplitude();
-            }
         }
-    ); // Assuming playSound is a function that plays the sound
 
-        }
 
         function handleFile(event) {
             let file = event.target.files[0];
@@ -247,6 +235,12 @@
 
         function mousePressed() {
             strikeLightning();
+            if (audioFile) {
+                audioFile.play();
+                amplitude = new p5.Amplitude();
+                console.log('Audio file playing, amplitude', amplitude);
+            }
+
         }
 
         window.addEventListener('devicemotion', function (event) {
