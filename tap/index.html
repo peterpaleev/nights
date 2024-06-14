@@ -25,13 +25,36 @@
             top: 48vh;
         }
 
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #removeButton {
+            position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    color: white;
+    background-color: #0032f5;
+    padding: 10px;
+    border: none;
+    /* border-radius: 5px; */
+    cursor: pointer;
+    font-weight: bold;
+        }
+
         canvas {
             display: block;
         }
 
-        /* editable css */
         style {
-            /* display: block; */
             color: white;
             position: absolute;
             top: 33px;
@@ -42,34 +65,43 @@
 </head>
 
 <body>
-    <!-- element with audio path preloaded ('/audio.waw') -->
     <input type="file" id="audioInput" accept="audio/*">
 
-    <!-- editable scc -->
+    <div id="controls">
+        <label for="strengthSlider">Strength:</label>
+        <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
+        <label for="blurSlider">Blur:</label>
+        <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
+    </div>
+
+    <button id="removeButton">Remove Interface</button>
+
     <style contenteditable>
         canvas {
-            /* filter: blur(12px) hue-rotate(180deg) invert(0); */
             filter: blur(5px);
         }
     </style>
 
     <script>
-        // function preload() {
-        //     // Replace 'path/to/your/audiofile.mp3' with the actual path to your audio file
-        //     audioFile = loadSound('path/to/your/audiofile.mp3');
-        // }
         let lightningStrikes = [];
         let audioFile;
         let amplitude;
+        let strengthSlider;
+        let blurSlider;
+        let canvasElement;
 
         function setup() {
-            createCanvas(windowWidth, windowHeight);
+            canvasElement = createCanvas(windowWidth, windowHeight);
             background(0);
+
+            strengthSlider = document.getElementById('strengthSlider');
+            blurSlider = document.getElementById('blurSlider');
+
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
-            // alternative preload file ('/audio.waw')
-            // audioFile = loadSound('/audio.wav', playSound);
 
+            let removeButton = document.getElementById('removeButton');
+            removeButton.addEventListener('click', removeInterface);
         }
 
         function handleFile(event) {
@@ -77,9 +109,6 @@
             if (file) {
                 let url = URL.createObjectURL(file);
                 audioFile = loadSound(url, playSound);
-                // alternative preload file ('/audio.waw')
-                // audioFile = loadSound('audio.waw', playSound);
-
             }
         }
 
@@ -89,11 +118,11 @@
         }
 
         function draw() {
-            background(0, 25); // semi-transparent background to create a fading effect
+            background(0, 25);
 
             if (audioFile && audioFile.isPlaying()) {
                 let level = amplitude.getLevel();
-                if (level > 0.01) { // threshold to detect a beat or audio trigger
+                if (level > 0.01) {
                     strikeLightning();
                 }
             }
@@ -102,14 +131,16 @@
                 strike.show();
             }
 
-            // Remove old lightning strikes
             lightningStrikes = lightningStrikes.filter(strike => !strike.isDone());
+
+            let blurValue = blurSlider.value;
+            canvasElement.style('filter', `blur(${blurValue}px)`);
         }
 
         function strikeLightning() {
             let x = random(width);
             let y = 0;
-            let strength = random(1, 10); // random strength for the lightning
+            let strength = strengthSlider.value;
             lightningStrikes.push(new Lightning(x, y, strength));
         }
 
@@ -136,7 +167,6 @@
             }
 
             show() {
-                // yellowish color for the lightning
                 stroke(255, 255, 200);
                 strokeWeight(this.strength);
                 for (let segment of this.segments) {
@@ -153,13 +183,10 @@
             }
         }
 
-        //                     strikeLightning(); on tap
         function mousePressed() {
             strikeLightning();
-            // removeFileInput();
         }
 
-        // when phone shakes remove file input
         window.addEventListener('devicemotion', function (event) {
             if (event.acceleration.x > 10 || event.acceleration.y > 10 || event.acceleration.z > 10) {
                 removeFileInput();
@@ -168,13 +195,75 @@
 
         function removeFileInput() {
             let audioInput = document.getElementById('audioInput');
-            // smooth fade out effect with css
             audioInput.style.transition = 'opacity 1s';
             audioInput.style.opacity = 0;
-
         }
 
-    </script>
+        function removeInterface() {
+            let controls = document.getElementById('controls');
+            let audioInput = document.getElementById('audioInput');
+            let removeButton = document.getElementById('removeButton');
+
+            controls.style.transition = 'opacity 1s';
+            controls.style.opacity = 0;
+            audioInput.style.transition = 'opacity 1s';
+            audioInput.style.opacity = 0;
+            removeButton.style.transition = 'opacity 1s';
+            removeButton.style.opacity = 0;
+
+            setTimeout(() => {
+                controls.remove();
+                audioInput.remove();
+                removeButton.remove();
+            }, 1000);
+        }
+
+        let isInterfaceVisible = false; // Step 1: Track the visibility of the interface
+
+function toggleInterface() {
+    if (!isInterfaceVisible) { 
+        // If the interface is not visible, create and show it
+        let controls = document.createElement('div');
+        controls.id = 'controls';
+        controls.innerHTML = `
+            <label for="strengthSlider">Strength:</label>
+            <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
+            <label for="blurSlider">Blur:</label>
+            <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
+        `;
+        document.body.appendChild(controls);
+
+        let audioInput = document.createElement('input');
+        audioInput.type = 'file';
+        audioInput.id = 'audioInput';
+        audioInput.accept = 'audio/*';
+        audioInput.addEventListener('change', handleFile);
+        document.body.appendChild(audioInput);
+
+        let removeButton = document.createElement('button');
+        removeButton.id = 'removeButton';
+        removeButton.textContent = 'Remove Interface';
+        removeButton.addEventListener('click', removeInterface);
+        document.body.appendChild(removeButton);
+
+        isInterfaceVisible = true; // Update the flag
+    } else {
+        // If the interface is visible, remove it
+        document.getElementById('controls')?.remove();
+        document.getElementById('audioInput')?.remove();
+        document.getElementById('removeButton')?.remove();
+
+        isInterfaceVisible = false; // Update the flag
+    }
+}
+
+// Adjust the event listener to toggle the interface on spacebar press
+window.addEventListener('keydown', function (event) {
+    if (event.code === 'Space') {
+        toggleInterface();
+        event.preventDefault(); // Prevent the default action to avoid scrolling the page
+    }
+});    </script>
 </body>
 
 </html>
