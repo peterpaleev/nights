@@ -79,6 +79,12 @@
         <input type="color" id="bgColorPicker" value="#000000"><br>
         <label for="randomnessSlider">Randomness:</label>
         <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
+        <label for="minFreqSlider">Min Frequency:</label>
+        <input type="range" id="minFreqSlider" min="20" max="20000" value="20"><br>
+        <label for="maxFreqSlider">Max Frequency:</label>
+        <input type="range" id="maxFreqSlider" min="20" max="20000" value="20000"><br>
+        <button id="startRecordingButton">Start Recording</button>
+        <button id="stopRecordingButton" disabled>Stop Recording</button>
     </div>
 
     <button id="removeButton">Remove Interface</button>
@@ -93,13 +99,18 @@
         let lightningStrikes = [];
         let audioFile;
         let amplitude;
+        let fft;
         let strengthSlider;
         let blurSlider;
         let sensitivitySlider;
         let colorPicker;
         let bgColorPicker;
         let randomnessSlider;
+        let minFreqSlider;
+        let maxFreqSlider;
         let canvasElement;
+        let chunks = [];
+        let mediaRecorder;
 
         function setup() {
             canvasElement = createCanvas(windowWidth, windowHeight);
@@ -111,12 +122,22 @@
             colorPicker = document.getElementById('colorPicker');
             bgColorPicker = document.getElementById('bgColorPicker');
             randomnessSlider = document.getElementById('randomnessSlider');
+            minFreqSlider = document.getElementById('minFreqSlider');
+            maxFreqSlider = document.getElementById('maxFreqSlider');
 
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
 
             let removeButton = document.getElementById('removeButton');
             removeButton.addEventListener('click', removeInterface);
+
+            let startRecordingButton = document.getElementById('startRecordingButton');
+            let stopRecordingButton = document.getElementById('stopRecordingButton');
+
+            startRecordingButton.addEventListener('click', startRecording);
+            stopRecordingButton.addEventListener('click', stopRecording);
+
+            fft = new p5.FFT(0.8, 1024);
         }
 
         function handleFile(event) {
@@ -136,8 +157,11 @@
             background(bgColorPicker.value + '33'); // Update background color
 
             if (audioFile && audioFile.isPlaying()) {
-                let level = amplitude.getLevel();
-                if (level > sensitivitySlider.value) {
+                fft.analyze();
+                let minFreq = minFreqSlider.value;
+                let maxFreq = maxFreqSlider.value;
+                let level = fft.getEnergy(minFreq, maxFreq);
+                if (level > sensitivitySlider.value * 255) {
                     strikeLightning();
                 }
             }
@@ -255,6 +279,12 @@
                     <input type="color" id="bgColorPicker" value="#000000"><br>
                     <label for="randomnessSlider">Randomness:</label>
                     <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
+                    <label for="minFreqSlider">Min Frequency:</label>
+                    <input type="range" id="minFreqSlider" min="20" max="20000" value="20"><br>
+                    <label for="maxFreqSlider">Max Frequency:</label>
+                    <input type="range" id="maxFreqSlider" min="20" max="20000" value="20000"><br>
+                    <button id="startRecordingButton">Start Recording</button>
+                    <button id="stopRecordingButton" disabled>Stop Recording</button>
                 `;
                 document.body.appendChild(controls);
 
@@ -271,6 +301,12 @@
                 removeButton.addEventListener('click', removeInterface);
                 document.body.appendChild(removeButton);
 
+                let startRecordingButton = document.getElementById('startRecordingButton');
+                let stopRecordingButton = document.getElementById('stopRecordingButton');
+
+                startRecordingButton.addEventListener('click', startRecording);
+                stopRecordingButton.addEventListener('click', stopRecording);
+
                 isInterfaceVisible = true; // Update the flag
             } else {
                 // If the interface is visible, remove it
@@ -282,8 +318,38 @@
             }
         }
 
+        function startRecording() {
+            let stream = document.querySelector('canvas').captureStream(30);
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                let blob = new Blob(chunks, { type: 'video/mp4' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'lightning_strikes.mp4';
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            mediaRecorder.start();
+            document.getElementById('startRecordingButton').disabled = true;
+            document.getElementById('stopRecordingButton').disabled = false;
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('startRecordingButton').disabled = false;
+            document.getElementById('stopRecordingButton').disabled = true;
+        }
+
         // Adjust the event listener to toggle the interface on spacebar press
-        window.addEventListener('keydown', function (event) {
+        window.addEventListener('keydown', function(event) {
             if (event.code === 'Space') {
                 toggleInterface();
                 event.preventDefault(); // Prevent the default action to avoid scrolling the page
