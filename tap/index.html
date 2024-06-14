@@ -38,16 +38,15 @@
 
         #removeButton {
             position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-    color: white;
-    background-color: #0032f5;
-    padding: 10px;
-    border: none;
-    /* border-radius: 5px; */
-    cursor: pointer;
-    font-weight: bold;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            color: white;
+            background-color: #0032f5;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         canvas {
@@ -72,6 +71,14 @@
         <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
         <label for="blurSlider">Blur:</label>
         <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
+        <label for="sensitivitySlider">Sensitivity:</label>
+        <input type="range" id="sensitivitySlider" min="0.01" max="0.5" step="0.01" value="0.1"><br>
+        <label for="colorPicker">Stroke Color:</label>
+        <input type="color" id="colorPicker" value="#FFFFC8"><br>
+        <label for="bgColorPicker">Background Color:</label>
+        <input type="color" id="bgColorPicker" value="#000000"><br>
+        <label for="randomnessSlider">Randomness:</label>
+        <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
     </div>
 
     <button id="removeButton">Remove Interface</button>
@@ -88,6 +95,10 @@
         let amplitude;
         let strengthSlider;
         let blurSlider;
+        let sensitivitySlider;
+        let colorPicker;
+        let bgColorPicker;
+        let randomnessSlider;
         let canvasElement;
 
         function setup() {
@@ -96,6 +107,10 @@
 
             strengthSlider = document.getElementById('strengthSlider');
             blurSlider = document.getElementById('blurSlider');
+            sensitivitySlider = document.getElementById('sensitivitySlider');
+            colorPicker = document.getElementById('colorPicker');
+            bgColorPicker = document.getElementById('bgColorPicker');
+            randomnessSlider = document.getElementById('randomnessSlider');
 
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
@@ -118,11 +133,11 @@
         }
 
         function draw() {
-            background(0, 25);
+            background(bgColorPicker.value + '33'); // Update background color
 
             if (audioFile && audioFile.isPlaying()) {
                 let level = amplitude.getLevel();
-                if (level > 0.01) {
+                if (level > sensitivitySlider.value) {
                     strikeLightning();
                 }
             }
@@ -141,14 +156,16 @@
             let x = random(width);
             let y = 0;
             let strength = strengthSlider.value;
-            lightningStrikes.push(new Lightning(x, y, strength));
+            let randomness = randomnessSlider.value;
+            lightningStrikes.push(new Lightning(x, y, strength, randomness));
         }
 
         class Lightning {
-            constructor(x, y, strength) {
+            constructor(x, y, strength, randomness) {
                 this.x = x;
                 this.y = y;
                 this.strength = strength;
+                this.randomness = randomness;
                 this.segments = [];
                 this.done = false;
                 this.createStrike();
@@ -158,7 +175,7 @@
                 let currentX = this.x;
                 let currentY = this.y;
                 while (currentY < height) {
-                    let nextX = currentX + random(-this.strength * 10, this.strength * 10);
+                    let nextX = currentX + random(-this.randomness, this.randomness);
                     let nextY = currentY + random(10, 20);
                     this.segments.push({ x1: currentX, y1: currentY, x2: nextX, y2: nextY });
                     currentX = nextX;
@@ -167,7 +184,7 @@
             }
 
             show() {
-                stroke(255, 255, 200);
+                stroke(colorPicker.value);
                 strokeWeight(this.strength);
                 for (let segment of this.segments) {
                     line(segment.x1, segment.y1, segment.x2, segment.y2);
@@ -220,50 +237,59 @@
 
         let isInterfaceVisible = false; // Step 1: Track the visibility of the interface
 
-function toggleInterface() {
-    if (!isInterfaceVisible) { 
-        // If the interface is not visible, create and show it
-        let controls = document.createElement('div');
-        controls.id = 'controls';
-        controls.innerHTML = `
-            <label for="strengthSlider">Strength:</label>
-            <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
-            <label for="blurSlider">Blur:</label>
-            <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
-        `;
-        document.body.appendChild(controls);
+        function toggleInterface() {
+            if (!isInterfaceVisible) {
+                // If the interface is not visible, create and show it
+                let controls = document.createElement('div');
+                controls.id = 'controls';
+                controls.innerHTML = `
+                    <label for="strengthSlider">Strength:</label>
+                    <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
+                    <label for="blurSlider">Blur:</label>
+                    <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
+                    <label for="sensitivitySlider">Sensitivity:</label>
+                    <input type="range" id="sensitivitySlider" min="0.01" max="0.5" step="0.01" value="0.1"><br>
+                    <label for="colorPicker">Stroke Color:</label>
+                    <input type="color" id="colorPicker" value="#FFFFC8"><br>
+                    <label for="bgColorPicker">Background Color:</label>
+                    <input type="color" id="bgColorPicker" value="#000000"><br>
+                    <label for="randomnessSlider">Randomness:</label>
+                    <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
+                `;
+                document.body.appendChild(controls);
 
-        let audioInput = document.createElement('input');
-        audioInput.type = 'file';
-        audioInput.id = 'audioInput';
-        audioInput.accept = 'audio/*';
-        audioInput.addEventListener('change', handleFile);
-        document.body.appendChild(audioInput);
+                let audioInput = document.createElement('input');
+                audioInput.type = 'file';
+                audioInput.id = 'audioInput';
+                audioInput.accept = 'audio/*';
+                audioInput.addEventListener('change', handleFile);
+                document.body.appendChild(audioInput);
 
-        let removeButton = document.createElement('button');
-        removeButton.id = 'removeButton';
-        removeButton.textContent = 'Remove Interface';
-        removeButton.addEventListener('click', removeInterface);
-        document.body.appendChild(removeButton);
+                let removeButton = document.createElement('button');
+                removeButton.id = 'removeButton';
+                removeButton.textContent = 'Remove Interface';
+                removeButton.addEventListener('click', removeInterface);
+                document.body.appendChild(removeButton);
 
-        isInterfaceVisible = true; // Update the flag
-    } else {
-        // If the interface is visible, remove it
-        document.getElementById('controls')?.remove();
-        document.getElementById('audioInput')?.remove();
-        document.getElementById('removeButton')?.remove();
+                isInterfaceVisible = true; // Update the flag
+            } else {
+                // If the interface is visible, remove it
+                document.getElementById('controls')?.remove();
+                document.getElementById('audioInput')?.remove();
+                document.getElementById('removeButton')?.remove();
 
-        isInterfaceVisible = false; // Update the flag
-    }
-}
+                isInterfaceVisible = false; // Update the flag
+            }
+        }
 
-// Adjust the event listener to toggle the interface on spacebar press
-window.addEventListener('keydown', function (event) {
-    if (event.code === 'Space') {
-        toggleInterface();
-        event.preventDefault(); // Prevent the default action to avoid scrolling the page
-    }
-});    </script>
+        // Adjust the event listener to toggle the interface on spacebar press
+        window.addEventListener('keydown', function (event) {
+            if (event.code === 'Space') {
+                toggleInterface();
+                event.preventDefault(); // Prevent the default action to avoid scrolling the page
+            }
+        });
+    </script>
 </body>
 
 </html>
