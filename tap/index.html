@@ -128,6 +128,11 @@
             let audioInput = document.getElementById('audioInput');
             audioInput.addEventListener('change', handleFile);
 
+                audioFile = loadSound('/audio.wav', playSound);
+                console.log('Audio file loaded');
+                console.log('audioFile', audioFile);
+
+
             let removeButton = document.getElementById('removeButton');
             removeButton.addEventListener('click', removeInterface);
 
