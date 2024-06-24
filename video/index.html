@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Video Translation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="controls">
+        <label for="saturation">Saturation</label>
+        <input type="range" id="saturationSlider" min="0" max="2" step="0.01" value="2">
+        
+        <label for="color">Color</label>
+        <input type="range" id="colorSlider" min="0" max="2" step="0.01" value="2">
+        
+        <label for="brightness">Brightness</label>
+        <input type="range" id="brightnessSlider" min="0" max="2" step="0.01" value="2">
+    </div>
+    <div id="video-container">
+        <!-- <video id="video" autoplay></video> -->
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

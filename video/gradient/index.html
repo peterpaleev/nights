@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gradient Rectangles with p5.js</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label>Start Color: <input type="color" id="startColor" value="#FFFFFF"></label>
+    <label>End Color: <input type="color" id="endColor" value="#A9A9A9"></label>
+    <label>Shift Start Color: <input type="range" id="shiftStart" min="0" max="255" value="0"></label>
+    <label>Shift End Color: <input type="range" id="shiftEnd" min="0" max="255" value="0"></label>
+  </div>
+  <script>
+    let startColor, endColor, shiftStart, shiftEnd;
+    let numRects = 32;
+    let rectHeight;
+
+    function setup() {
+      createCanvas(400, windowHeight);
+      rectHeight = height / numRects;
+      startColor = select('#startColor');
+      endColor = select('#endColor');
+      shiftStart = select('#shiftStart');
+      shiftEnd = select('#shiftEnd');
+
+      startColor.input(redraw);
+      endColor.input(redraw);
+      shiftStart.input(redraw);
+      shiftEnd.input(redraw);
+
+      noLoop();
+    }
+
+    function draw() {
+      clear();
+      let start = color(startColor.value());
+      let end = color(endColor.value());
+
+      for (let i = 0; i < numRects; i++) {
+        let interStart = lerpColor(start, end, i / (numRects - 1));
+        let interEnd = lerpColor(start, end, (i + 1) / (numRects - 1));
+
+        let shiftStartVal = shiftStart.value();
+        let shiftEndVal = shiftEnd.value();
+
+        interStart.levels[0] = constrain(interStart.levels[0] + shiftStartVal * i, 0, 255);
+        interStart.levels[1] = constrain(interStart.levels[1] + shiftStartVal * i, 0, 255);
+        interStart.levels[2] = constrain(interStart.levels[2] + shiftStartVal * i, 0, 255);
+
+        interEnd.levels[0] = constrain(interEnd.levels[0] + shiftEndVal * i, 0, 255);
+        interEnd.levels[1] = constrain(interEnd.levels[1] + shiftEndVal * i, 0, 255);
+        interEnd.levels[2] = constrain(interEnd.levels[2] + shiftEndVal * i, 0, 255);
+
+        drawGradientRect(0, i * rectHeight, width, rectHeight, interStart, interEnd);
+      }
+    }
+
+    function drawGradientRect(x, y, w, h, c1, c2) {
+      for (let i = y; i <= y + h; i++) {
+        let inter = map(i, y, y + h, 0, 1);
+        let c = lerpColor(c1, c2, inter);
+        stroke(c);
+        line(x, i, x + w, i);
+      }
+    }
+  </script>
+</body>
+</html>

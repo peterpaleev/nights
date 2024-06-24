@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Visuals Generator</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #controls { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+</head>
+<body>
+    <input type="file" id="audioInput" accept="audio/*" style="display: none;">
+    <div id="controls" style="display: none;">
+        <button id="addTriggerButton">Add Trigger</button>
+        <button id="removeButton">Remove Interface</button>
+        <label for="blurSlider">Blur:</label>
+        <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
+        <label for="bgColorPicker">Background Color:</label>
+        <input type="color" id="bgColorPicker" value="#000000"><br>
+        <button id="startRecordingButton">Start Recording</button>
+        <button id="stopRecordingButton" disabled>Stop Recording</button>
+    </div>
+    <script>
+
+let visualTriggers = [];
+let audioFile;
+let amplitude;
+let fft;
+let canvasElement;
+let chunks = [];
+let mediaRecorder;
+let isInterfaceVisible = false;
+
+function setup() {
+    canvasElement = createCanvas(windowWidth, windowHeight);
+    background(0);
+
+    let audioInput = document.getElementById('audioInput');
+    audioInput.addEventListener('change', handleFile);
+
+    audioFile = loadSound('audio.mp3', playSound);
+    fft = new p5.FFT(0.8, 1024);
+
+    let removeButton = document.getElementById('removeButton');
+    removeButton.addEventListener('click', removeInterface);
+
+    let startRecordingButton = document.getElementById('startRecordingButton');
+    let stopRecordingButton = document.getElementById('stopRecordingButton');
+
+    startRecordingButton.addEventListener('click', startRecording);
+    stopRecordingButton.addEventListener('click', stopRecording);
+}
+
+function handleFile(event) {
+    let file = event.target.files[0];
+    if (file) {
+        let url = URL.createObjectURL(file);
+        audioFile = loadSound(url, playSound);
+    }
+}
+
+function playSound() {
+    audioFile.play();
+    amplitude = new p5.Amplitude();
+}
+
+function draw() {
+    background(bgColorPicker.value + '33'); // Update background color
+
+    if (audioFile && audioFile.isPlaying()) {
+        fft.analyze();
+
+        for (let trigger of visualTriggers) {
+            trigger.update(fft);
+            trigger.show();
+        }
+    }
+
+    let blurValue = document.getElementById('blurSlider').value;
+    canvasElement.style('filter', `blur(${blurValue}px)`);
+}
+
+class VisualTrigger {
+    constructor(id) {
+        this.id = id;
+        this.strengthSlider = this.createSlider('Strength', 1, 20, 10);
+        this.sensitivitySlider = this.createSlider('Sensitivity', 0.01, 0.5, 0.1, 0.01);
+        this.colorPicker = this.createColorPicker('Stroke Color', '#FFFFC8');
+        this.minFreqSlider = this.createSlider('Min Frequency', 20, 20000, 20);
+        this.maxFreqSlider = this.createSlider('Max Frequency', 20, 20000, 20000);
+        this.randomnessSlider = this.createSlider('Randomness', 1, 50, 10);
+
+        this.strikes = [];
+    }
+
+    createSlider(label, min, max, value, step = 1) {
+        let slider = createSlider(min, max, value, step);
+        let labelElement = createElement('label', `${label}:`);
+        let div = createDiv().id(`trigger-${this.id}`);
+        labelElement.parent(div);
+        slider.parent(div);
+        return slider;
+    }
+
+    createColorPicker(label, value) {
+        let colorPicker = createColorPicker(value);
+        let labelElement = createElement('label', `${label}:`);
+        let div = createDiv().id(`trigger-${this.id}`);
+        labelElement.parent(div);
+        colorPicker.parent(div);
+        return colorPicker;
+    }
+
+    update(fft) {
+        let minFreq = this.minFreqSlider.value();
+        let maxFreq = this.maxFreqSlider.value();
+        let level = fft.getEnergy(minFreq, maxFreq);
+        if (level > this.sensitivitySlider.value() * 255) {
+            this.strikeLightning();
+        }
+
+        this.strikes = this.strikes.filter(strike => !strike.isDone());
+    }
+
+    strikeLightning() {
+        let x = random(width);
+        let y = 0;
+        let strength = this.strengthSlider.value();
+        let randomness = this.randomnessSlider.value();
+        this.strikes.push(new Lightning(x, y, strength, randomness, this.colorPicker.color()));
+    }
+
+    show() {
+        for (let strike of this.strikes) {
+            strike.show();
+        }
+    }
+}
+
+class Lightning {
+    constructor(x, y, strength, randomness, color) {
+        this.x = x;
+        this.y = y;
+        this.strength = strength;
+        this.randomness = randomness;
+        this.color = color;
+        this.segments = [];
+        this.done = false;
+        this.createStrike();
+    }
+
+    createStrike() {
+        let currentX = this.x;
+        let currentY = this.y;
+        while (currentY < height) {
+            let nextX = currentX + random(-this.randomness, this.randomness);
+            let nextY = currentY + random(10, 20);
+            this.segments.push({ x1: currentX, y1: currentY, x2: nextX, y2: nextY });
+            currentX = nextX;
+            currentY = nextY;
+        }
+    }
+
+    show() {
+        stroke(this.color);
+        strokeWeight(this.strength);
+        for (let segment of this.segments) {
+            line(segment.x1, segment.y1, segment.x2, segment.y2);
+        }
+        this.strength -= 0.1;
+        if (this.strength <= 0) {
+            this.done = true;
+        }
+    }
+
+    isDone() {
+        return this.done;
+    }
+}
+
+function mousePressed() {
+    if (audioFile) {
+        audioFile.play();
+        amplitude = new p5.Amplitude();
+    }
+}
+
+window.addEventListener('devicemotion', function (event) {
+    if (event.acceleration.x > 10 || event.acceleration.y > 10 || event.acceleration.z > 10) {
+        removeFileInput();
+    }
+});
+
+function removeFileInput() {
+    let audioInput = document.getElementById('audioInput');
+    audioInput.style.transition = 'opacity 1s';
+    audioInput.style.opacity = 0;
+}
+
+function removeInterface() {
+    document.getElementById('controls').style.transition = 'opacity 1s';
+    document.getElementById('controls').style.opacity = 0;
+    setTimeout(() => {
+        document.getElementById('controls').remove();
+    }, 1000);
+}
+
+function toggleInterface() {
+    if (!isInterfaceVisible) {
+        let controls = document.createElement('div');
+        controls.id = 'controls';
+        document.body.appendChild(controls);
+
+        let addTriggerButton = document.createElement('button');
+        addTriggerButton.textContent = 'Add Trigger';
+        addTriggerButton.addEventListener('click', addTrigger);
+        controls.appendChild(addTriggerButton);
+
+        let removeButton = document.createElement('button');
+        removeButton.textContent = 'Remove Interface';
+        removeButton.id = 'removeButton';
+        removeButton.addEventListener('click', removeInterface);
+        controls.appendChild(removeButton);
+
+        let blurSlider = document.createElement('input');
+        blurSlider.type = 'range';
+        blurSlider.id = 'blurSlider';
+        blurSlider.min = 0;
+        blurSlider.max = 20;
+        blurSlider.value = 5;
+        controls.appendChild(blurSlider);
+
+        let bgColorPicker = document.createElement('input');
+        bgColorPicker.type = 'color';
+        bgColorPicker.id = 'bgColorPicker';
+        bgColorPicker.value = '#000000';
+        controls.appendChild(bgColorPicker);
+
+        let startRecordingButton = document.createElement('button');
+        startRecordingButton.textContent = 'Start Recording';
+        startRecordingButton.id = 'startRecordingButton';
+        startRecordingButton.addEventListener('click', startRecording);
+        controls.appendChild(startRecordingButton);
+
+        let stopRecordingButton = document.createElement('button');
+        stopRecordingButton.textContent = 'Stop Recording';
+        stopRecordingButton.id = 'stopRecordingButton';
+        stopRecordingButton.disabled = true;
+        stopRecordingButton.addEventListener('click', stopRecording);
+        controls.appendChild(stopRecordingButton);
+
+        isInterfaceVisible = true;
+    } else {
+        removeInterface();
+        isInterfaceVisible = false;
+    }
+}
+
+function addTrigger() {
+    let id = visualTriggers.length;
+    let trigger = new VisualTrigger(id);
+    visualTriggers.push(trigger);
+}
+
+function startRecording() {
+    let stream = document.querySelector('canvas').captureStream(30);
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = function (event) {
+        if (event.data.size > 0) {
+            chunks.push(event.data);
+        }
+    };
+    mediaRecorder.onstop = function () {
+        let blob = new Blob(chunks, { type: 'video/mp4' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'lightning_strikes.mp4';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    mediaRecorder.start();
+    document.getElementById('startRecordingButton').disabled = true;
+    document.getElementById('stopRecordingButton').disabled = false;
+}
+
+function stopRecording() {
+    mediaRecorder.stop();
+    document.getElementById('startRecordingButton').disabled = false;
+    document.getElementById('stopRecordingButton').disabled = true;
+}
+
+window.addEventListener('keydown', function (event) {
+    if (event.code === 'Space') {
+        toggleInterface();
+        event.preventDefault();
+    }
+});
+</script>
+</body>
+</html>
+

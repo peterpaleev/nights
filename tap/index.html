@@ -17,15 +17,11 @@
             background: black;
         }
 
-        #audioInput {
-            position: absolute;
-            color: white;
-            background-color: #0032f5;
-            z-index: 100;
-            top: 48vh;
+        .audio-input {
+            display: none;
         }
 
-        #controls {
+        .controls {
             position: absolute;
             top: 10px;
             left: 10px;
@@ -36,7 +32,7 @@
             border-radius: 5px;
         }
 
-        #removeButton {
+        .remove-button {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -49,24 +45,27 @@
             font-weight: bold;
         }
 
-        canvas {
-            display: block;
+        .add-button {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 100;
+            color: white;
+            background-color: #00ff00;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
         }
 
-        style {
-            color: white;
-            position: absolute;
-            top: 33px;
-            z-index: 10;
-            font-family: monospace, 'Helvetica', sans-serif;
+        canvas {
+            display: block;
         }
     </style>
 </head>
 
 <body>
-    <input style="display: none;" type="file" id="audioInput" accept="audio/*">
-
-    <div id="controls">
+    <div id="mainControls" class="controls">
         <label for="strengthSlider">Strength:</label>
         <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
         <label for="blurSlider">Blur:</label>
@@ -80,34 +79,21 @@
         <label for="randomnessSlider">Randomness:</label>
         <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
         <label for="minFreqSlider">Min Frequency:</label>
-        <input type="range" id="minFreqSlider" min="22" max="19000" value="22"><br>
+        <input type="range" id="minFreqSlider" min="22" max="19000" value="14000"><br>
         <label for="maxFreqSlider">Max Frequency:</label>
         <input type="range" id="maxFreqSlider" min="22" max="19000" value="19000"><br>
         <button id="startRecordingButton">Start Recording</button>
         <button id="stopRecordingButton" disabled>Stop Recording</button>
     </div>
 
-    <button id="removeButton">Remove Interface</button>
-
-    <style contenteditable>
-        canvas {
-            filter: blur(5px);
-        }
-    </style>
+    <button id="removeButton" class="remove-button">Remove Interface</button>
+    <button id="addButton" class="add-button">Add Lightning Button</button>
 
     <script>
         let lightningStrikes = [];
         let audioFile;
         let amplitude;
         let fft;
-        let strengthSlider;
-        let blurSlider;
-        let sensitivitySlider;
-        let colorPicker;
-        let bgColorPicker;
-        let randomnessSlider;
-        let minFreqSlider;
-        let maxFreqSlider;
         let canvasElement;
         let chunks = [];
         let mediaRecorder;
@@ -116,22 +102,17 @@
             canvasElement = createCanvas(windowWidth, windowHeight);
             background(0);
 
-            strengthSlider = document.getElementById('strengthSlider');
-            blurSlider = document.getElementById('blurSlider');
-            sensitivitySlider = document.getElementById('sensitivitySlider');
-            colorPicker = document.getElementById('colorPicker');
-            bgColorPicker = document.getElementById('bgColorPicker');
-            randomnessSlider = document.getElementById('randomnessSlider');
-            minFreqSlider = document.getElementById('minFreqSlider');
-            maxFreqSlider = document.getElementById('maxFreqSlider');
-
-            let audioInput = document.getElementById('audioInput');
+            let audioInput = document.createElement('input');
+            audioInput.classList.add('audio-input');
+            audioInput.type = 'file';
+            audioInput.accept = 'audio/*';
+            audioInput.id = `audioInput${Date.now()}`;
             audioInput.addEventListener('change', handleFile);
+            document.body.appendChild(audioInput);
 
             audioFile = loadSound('audio.mp3', playSound);
             console.log('Audio file loaded');
             console.log('audioFile', audioFile);
-
 
             let removeButton = document.getElementById('removeButton');
             removeButton.addEventListener('click', removeInterface);
@@ -144,8 +125,9 @@
 
             fft = new p5.FFT(0.8, 1024);
 
+            let addButton = document.getElementById('addButton');
+            addButton.addEventListener('click', addLightningButton);
         }
-
 
         function handleFile(event) {
             let file = event.target.files[0];
@@ -161,16 +143,15 @@
         }
 
         function draw() {
-            background(bgColorPicker.value + '33'); // Update background color
+            let bgColor = document.querySelector('#bgColorPicker').value;
+            background(bgColor + '33'); // Update background color
 
             if (audioFile && audioFile.isPlaying()) {
                 fft.analyze();
-                //convert to number
-                let minFreq = Number(minFreqSlider.value);
-                let maxFreq = Number(maxFreqSlider.value);
-                console.log(minFreq, maxFreq);
+                let minFreq = Number(document.querySelector('#minFreqSlider').value);
+                let maxFreq = Number(document.querySelector('#maxFreqSlider').value);
                 let level = fft.getEnergy(minFreq, maxFreq);
-                if (level > sensitivitySlider.value * 255) {
+                if (level > document.querySelector('#sensitivitySlider').value * 255) {
                     strikeLightning();
                 }
             }
@@ -181,15 +162,15 @@
 
             lightningStrikes = lightningStrikes.filter(strike => !strike.isDone());
 
-            let blurValue = blurSlider.value;
+            let blurValue = document.querySelector('#blurSlider').value;
             canvasElement.style('filter', `blur(${blurValue}px)`);
         }
 
         function strikeLightning() {
             let x = random(width);
             let y = 0;
-            let strength = strengthSlider.value;
-            let randomness = randomnessSlider.value;
+            let strength = document.querySelector('#strengthSlider').value;
+            let randomness = document.querySelector('#randomnessSlider').value;
             lightningStrikes.push(new Lightning(x, y, strength, randomness));
         }
 
@@ -217,7 +198,7 @@
             }
 
             show() {
-                stroke(colorPicker.value);
+                stroke(document.querySelector('#colorPicker').value);
                 strokeWeight(this.strength);
                 for (let segment of this.segments) {
                     line(segment.x1, segment.y1, segment.x2, segment.y2);
@@ -240,7 +221,6 @@
                 amplitude = new p5.Amplitude();
                 console.log('Audio file playing, amplitude', amplitude);
             }
-
         }
 
         window.addEventListener('devicemotion', function (event) {
@@ -250,87 +230,70 @@
         });
 
         function removeFileInput() {
-            let audioInput = document.getElementById('audioInput');
+            let audioInput = document.querySelector('.audio-input');
             audioInput.style.transition = 'opacity 1s';
             audioInput.style.opacity = 0;
         }
 
         function removeInterface() {
-            let controls = document.getElementById('controls');
-            let audioInput = document.getElementById('audioInput');
+            let controls = document.querySelectorAll('.controls');
+            let audioInputs = document.querySelectorAll('.audio-input');
             let removeButton = document.getElementById('removeButton');
 
-            controls.style.transition = 'opacity 1s';
-            controls.style.opacity = 0;
-            audioInput.style.transition = 'opacity 1s';
-            audioInput.style.opacity = 0;
+            controls.forEach(control => {
+                control.style.transition = 'opacity 1s';
+                control.style.opacity = 0;
+                setTimeout(() => control.remove(), 1000);
+            });
+
+            audioInputs.forEach(input => {
+                input.style.transition = 'opacity 1s';
+                input.style.opacity = 0;
+                setTimeout(() => input.remove(), 1000);
+            });
+
             removeButton.style.transition = 'opacity 1s';
             removeButton.style.opacity = 0;
-
-            setTimeout(() => {
-                controls.remove();
-                audioInput.remove();
-                removeButton.remove();
-            }, 1000);
+            setTimeout(() => removeButton.remove(), 1000);
         }
 
-        let isInterfaceVisible = false; // Step 1: Track the visibility of the interface
+        function addLightningButton() {
+            let controls = document.createElement('div');
+            controls.classList.add('controls');
+            controls.innerHTML = `
+                <label for="strengthSlider">Strength:</label>
+                <input type="range" class="strengthSlider" min="1" max="20" value="10"><br>
+                <label for="blurSlider">Blur:</label>
+                <input type="range" class="blurSlider" min="0" max="20" value="5"><br>
+                <label for="sensitivitySlider">Sensitivity:</label>
+                <input type="range" class="sensitivitySlider" min="0.01" max="0.5" step="0.001" value="0.06"><br>
+                <label for="colorPicker">Stroke Color:</label>
+                <input type="color" class="colorPicker" value="#FFFFC8"><br>
+                <label for="bgColorPicker">Background Color:</label>
+                <input type="color" class="bgColorPicker" value="#000000"><br>
+                <label for="randomnessSlider">Randomness:</label>
+                <input type="range" class="randomnessSlider" min="1" max="50" value="10"><br>
+                <label for="minFreqSlider">Min Frequency:</label>
+                <input type="range" class="minFreqSlider" min="22" max="19000" value="14000"><br>
+                <label for="maxFreqSlider">Max Frequency:</label>
+                <input type="range" class="maxFreqSlider" min="22" max="19000" value="19000"><br>
+                <button class="startRecordingButton">Start Recording</button>
+                <button class="stopRecordingButton" disabled>Stop Recording</button>
+            `;
+            document.body.appendChild(controls);
 
-        function toggleInterface() {
-            if (!isInterfaceVisible) {
-                // If the interface is not visible, create and show it
-                let controls = document.createElement('div');
-                controls.id = 'controls';
-                controls.innerHTML = `
-                    <label for="strengthSlider">Strength:</label>
-                    <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
-                    <label for="blurSlider">Blur:</label>
-                    <input type="range" id="blurSlider" min="0" max="20" value="5"><br>
-                    <label for="sensitivitySlider">Sensitivity:</label>
-                    <input type="range" id="sensitivitySlider" min="0.01" max="0.5" step="0.01" value="0.1"><br>
-                    <label for="colorPicker">Stroke Color:</label>
-                    <input type="color" id="colorPicker" value="#FFFFC8"><br>
-                    <label for="bgColorPicker">Background Color:</label>
-                    <input type="color" id="bgColorPicker" value="#000000"><br>
-                    <label for="randomnessSlider">Randomness:</label>
-                    <input type="range" id="randomnessSlider" min="1" max="50" value="10"><br>
-                    <label for="minFreqSlider">Min Frequency:</label>
-                    <input type="range" id="minFreqSlider" min="20" max="20000" value="20"><br>
-                    <label for="maxFreqSlider">Max Frequency:</label>
-                    <input type="range" id="maxFreqSlider" min="20" max="20000" value="20000"><br>
-                    <button id="startRecordingButton">Start Recording</button>
-                    <button id="stopRecordingButton" disabled>Stop Recording</button>
-                `;
-                document.body.appendChild(controls);
+            let audioInput = document.createElement('input');
+            audioInput.classList.add('audio-input');
+            audioInput.type = 'file';
+            audioInput.accept = 'audio/*';
+            audioInput.addEventListener('change', handleFile);
+            document.body.appendChild(audioInput);
 
-                let audioInput = document.createElement('input');
-                audioInput.type = 'file';
-                audioInput.id = 'audioInput';
-                audioInput.accept = 'audio/*';
-                audioInput.addEventListener('change', handleFile);
-                document.body.appendChild(audioInput);
+            let startRecordingButton = controls.querySelector('.startRecordingButton');
+            let stopRecordingButton = controls.querySelector('.stopRecordingButton');
 
-                let removeButton = document.createElement('button');
-                removeButton.id = 'removeButton';
-                removeButton.textContent = 'Remove Interface';
-                removeButton.addEventListener('click', removeInterface);
-                document.body.appendChild(removeButton);
-
-                let startRecordingButton = document.getElementById('startRecordingButton');
-                let stopRecordingButton = document.getElementById('stopRecordingButton');
-
-                startRecordingButton.addEventListener('click', startRecording);
-                stopRecordingButton.addEventListener('click', stopRecording);
-
-                isInterfaceVisible = true; // Update the flag
-            } else {
-                // If the interface is visible, remove it
-                document.getElementById('controls')?.remove();
-                document.getElementById('audioInput')?.remove();
-                document.getElementById('removeButton')?.remove();
-
-                isInterfaceVisible = false; // Update the flag
-            }
+            startRecordingButton.addEventListener('click', startRecording);
+            stopRecordingButton.addEventListener('click', stopRecording);
         }
 
         function startRecording() {
@@ -353,21 +316,20 @@
                 URL.revokeObjectURL(url);
             };
             mediaRecorder.start();
-            document.getElementById('startRecordingButton').disabled = true;
-            document.getElementById('stopRecordingButton').disabled = false;
+            document.querySelectorAll('.startRecordingButton').forEach(button => button.disabled = true);
+            document.querySelectorAll('.stopRecordingButton').forEach(button => button.disabled = false);
         }
 
         function stopRecording() {
             mediaRecorder.stop();
-            document.getElementById('startRecordingButton').disabled = false;
-            document.getElementById('stopRecordingButton').disabled = true;
+            document.querySelectorAll('.startRecordingButton').forEach(button => button.disabled = false);
+            document.querySelectorAll('.stopRecordingButton').forEach(button => button.disabled = true);
         }
 
-        // Adjust the event listener to toggle the interface on spacebar press
         window.addEventListener('keydown', function (event) {
             if (event.code === 'Space') {
                 toggleInterface();
-                event.preventDefault(); // Prevent the default action to avoid scrolling the page
+                event.preventDefault();
             }
         });
     </script>
