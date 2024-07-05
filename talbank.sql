@@ -5,9 +5,16 @@ CREATE TABLE Users (
     age INT,
     gender VARCHAR(10),
     preferences TEXT,
+    equipment_ids TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+CREATE TABLE Characteristics (
+    user_id INT,
+    characteristics TEXT,
+    question TEXT
+)
 
 CREATE TABLE (
     sport_id INT AUTO_INCREMENT PRIMARY KEY,

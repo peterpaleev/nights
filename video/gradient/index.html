@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gradient Rectangles with p5.js</title>
+  <title>Gradient Rectangles with Camera Input</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -11,9 +11,19 @@
       flex-direction: column;
       align-items: center;
       font-family: Arial, sans-serif;
+      background-color: black;
+      margin: 0;
+      padding: 0;
     }
     #controls {
       margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    label {
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -28,6 +38,7 @@
     let startColor, endColor, shiftStart, shiftEnd;
     let numRects = 32;
     let rectHeight;
+    let video;
 
     function setup() {
       createCanvas(400, windowHeight);
@@ -42,20 +53,28 @@
       shiftStart.input(redraw);
       shiftEnd.input(redraw);
 
+      video = createCapture(VIDEO);
+      video.size(width, height);
+      video.hide();
+
       noLoop();
     }
 
     function draw() {
-      clear();
+      background(0);
+      image(video, 0, 0, width, height);
+
       let start = color(startColor.value());
       let end = color(endColor.value());
+
+      blendMode(DARKEST);
 
       for (let i = 0; i < numRects; i++) {
         let interStart = lerpColor(start, end, i / (numRects - 1));
         let interEnd = lerpColor(start, end, (i + 1) / (numRects - 1));
 
-        let shiftStartVal = shiftStart.value();
-        let shiftEndVal = shiftEnd.value();
+        let shiftStartVal = int(shiftStart.value());
+        let shiftEndVal = int(shiftEnd.value());
 
         interStart.levels[0] = constrain(interStart.levels[0] + shiftStartVal * i, 0, 255);
         interStart.levels[1] = constrain(interStart.levels[1] + shiftStartVal * i, 0, 255);
