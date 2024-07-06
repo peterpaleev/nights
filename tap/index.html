@@ -60,13 +60,65 @@
             z-index: 10;
             font-family: monospace, 'Helvetica', sans-serif;
         }
+
+        .label {
+            position: absolute;
+            z-index: 1000;
+            color: white;
+            font-family: sans-serif;
+            font-size: x-large;
+            font-weight: 600;
+
+            cursor: context-menu;
+        }
+
+        .action {
+            position: absolute;
+            top: 50vh;
+            left: 50vw;
+            z-index: 1000;
+            color: white;
+            font-family: sans-serif;
+            font-size: x-large;
+            font-weight: 600;
+            font-size: 10em;
+            filter: blur(12px);
+            color: #FFFFC8;
+            cursor: pointer;
+            cursor: cell;
+
+
+            transform: translate(-50%, -50%);
+        }
+
+        .top {
+            top: 2vh;
+        }
+        .bottom {
+            bottom: 2vh;
+        }
+        .left {
+            left: 2vh;
+        }
+        .right {
+            right: 2vh;
+        }
+
+
     </style>
 </head>
 
 <body>
+    <b class="label top left">НОЧИ</b>
+    <b class="label top right">meta.brother</b>
+    <!-- <b class="label bottom left">meta.brother</b> -->
+    <b class="label bottom right">Amr (C) Rcii</b>
+
+    <b id="action" class="action">TAP</b>
+
     <input style="display: none;" type="file" id="audioInput" accept="audio/*">
 
-    <div id="controls">
+    <div style="display: none;" id="controls">
         <label for="strengthSlider">Strength:</label>
         <input type="range" id="strengthSlider" min="1" max="20" value="10"><br>
         <label for="blurSlider">Blur:</label>
@@ -87,7 +139,7 @@
         <button id="stopRecordingButton" disabled>Stop Recording</button>
     </div>
 
-    <button id="removeButton">Remove Interface</button>
+    <button style="display: none;" id="removeButton">Remove Interface</button>
 
     <style contenteditable>
         canvas {
@@ -241,6 +293,15 @@
                 console.log('Audio file playing, amplitude', amplitude);
             }
 
+            hideAction()
+
+        }
+
+        function hideAction() {
+            const actionElement = document.getElementById('action')
+
+            actionElement.style.transition = 'opacity 1s';
+            actionElement.style.opacity = 0;
         }
 
         window.addEventListener('devicemotion', function (event) {
