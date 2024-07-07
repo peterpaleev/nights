@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Lightning Strike on Audio Trigger</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
@@ -15,6 +15,9 @@
             height: 100vh;
             margin: 0;
             background: black;
+            touch-action: pan-y, pan-x;
+            touch-action: none;
+
         }
 
         #audioInput {
@@ -68,7 +71,7 @@
             font-family: monospace;
             font-size: medium;
             font-weight: 500;
-            
+
             cursor: context-menu;
         }
 
