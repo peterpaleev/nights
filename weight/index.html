@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airline Weight Cost Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h1, h2, h3 {
+            text-align: center;
+        }
+        .calculator {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .result {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Airline Weight Cost Calculator</h1>
+    <p>Welcome to our Airline Weight Cost Calculator. This tool helps you estimate the cost for an airline to carry additional weight on an average distance trip. The calculation considers fuel costs, maintenance costs, and operational costs.</p>
+    
+    <h2>How It Works</h2>
+    <p>The total cost increase for carrying additional weight is calculated using the following formula:</p>
+    <ul>
+        <li><b>Fuel Costs:</b> The increase in fuel consumption due to the additional weight is calculated based on the fuel burn rate per kilogram per kilometer, multiplied by the distance and the fuel price.</li>
+        <li><b>Maintenance Costs:</b> A marginal increase in maintenance costs is added based on the additional weight and flight duration.</li>
+        <li><b>Operational Costs:</b> A slight increase in operational costs is estimated based on the additional weight and the average operational costs of a flight.</li>
+    </ul>
+    
+    <h3>Calculator</h3>
+    <div class="calculator">
+        <div class="form-group">
+            <label for="weight">Additional Weight (kg):</label>
+            <input type="number" id="weight" value="50">
+        </div>
+        <div class="form-group">
+            <label for="distance">Flight Distance (km):</label>
+            <input type="number" id="distance" value="1000">
+        </div>
+        <div class="form-group">
+            <label for="fuelPrice">Fuel Price (USD per kg):</label>
+            <input type="number" id="fuelPrice" value="0.75" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="maintenanceCost">Maintenance Cost Increase (USD per kg per hour):</label>
+            <input type="number" id="maintenanceCost" value="0.10" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="flightDuration">Flight Duration (hours):</label>
+            <input type="number" id="flightDuration" value="2">
+        </div>
+        <div class="form-group">
+            <label for="operationalCost">Total Operational Cost (USD):</label>
+            <input type="number" id="operationalCost" value="10000">
+        </div>
+        <div class="form-group">
+            <label for="operationalIncrease">Operational Cost Increase (%):</label>
+            <input type="number" id="operationalIncrease" value="0.1" step="0.01">
+        </div>
+        <button onclick="calculateCost()">Calculate</button>
+        
+        <div class="result" id="result"></div>
+    </div>
+</div>
+
+<script>
+    function calculateCost() {
+        const weight = parseFloat(document.getElementById('weight').value);
+        const distance = parseFloat(document.getElementById('distance').value);
+        const fuelPrice = parseFloat(document.getElementById('fuelPrice').value);
+        const maintenanceCost = parseFloat(document.getElementById('maintenanceCost').value);
+        const flightDuration = parseFloat(document.getElementById('flightDuration').value);
+        const operationalCost = parseFloat(document.getElementById('operationalCost').value);
+        const operationalIncrease = parseFloat(document.getElementById('operationalIncrease').value);
+
+        const fuelBurnRate = 0.00057;
+        const fuelConsumptionIncrease = fuelBurnRate * weight * distance;
+        const fuelCostIncrease = fuelConsumptionIncrease * fuelPrice;
+
+        const maintenanceCostIncrease = maintenanceCost * weight * flightDuration;
+        const operationalCostIncrease = (operationalIncrease / 100) * operationalCost * (weight / 70);
+
+        const totalCostIncrease = fuelCostIncrease + maintenanceCostIncrease + operationalCostIncrease;
+
+        document.getElementById('result').innerText = `Total Cost Increase: $${totalCostIncrease.toFixed(2)}`;
+    }
+</script>
+
+</body>
+</html>
