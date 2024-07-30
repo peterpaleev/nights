@@ -2,14 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Airline Weight Cost Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            touch-action: pan-y, pan-x;
-            touch-action: none;
         }
         .container {
             max-width: 800px;
@@ -39,6 +37,14 @@
         .result {
             text-align: center;
             margin-top: 20px;
+        }
+        #chart {
+            margin-top: 20px;
+        }
+        .chart-label {
+            font-size: 14px;
+            text-align: center;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -89,6 +95,8 @@
         <button onclick="calculateCost()">Calculate</button>
         
         <div class="result" id="result"></div>
+        <canvas id="chart" width="800" height="200"></canvas>
+        <div class="chart-label" id="chart-label"></div>
     </div>
 </div>
 
@@ -112,6 +120,49 @@
         const totalCostIncrease = fuelCostIncrease + maintenanceCostIncrease + operationalCostIncrease;
 
         document.getElementById('result').innerText = `Total Cost Increase: $${totalCostIncrease.toFixed(2)}`;
+        
+        drawChart(fuelCostIncrease, maintenanceCostIncrease, operationalCostIncrease);
+    }
+
+    function drawChart(fuelCost, maintenanceCost, operationalCost) {
+        const canvas = document.getElementById('chart');
+        const ctx = canvas.getContext('2d');
+        const totalCost = fuelCost + maintenanceCost + operationalCost;
+
+        const fuelWidth = (fuelCost / totalCost) * canvas.width;
+        const maintenanceWidth = (maintenanceCost / totalCost) * canvas.width;
+        const operationalWidth = (operationalCost / totalCost) * canvas.width;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw fuel cost
+        ctx.fillStyle = 'red';
+        ctx.fillRect(0, 0, fuelWidth, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Fuel Cost: $${fuelCost.toFixed(2)}`, fuelWidth / 2 - 50, canvas.height / 2);
+
+        // Draw maintenance cost
+        ctx.fillStyle = 'green';
+        ctx.fillRect(fuelWidth, 0, maintenanceWidth, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Maintenance Cost: $${maintenanceCost.toFixed(2)}`, fuelWidth + maintenanceWidth / 2 - 80, canvas.height / 2);
+
+        // Draw operational cost
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(fuelWidth + maintenanceWidth, 0, operationalWidth, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Operational Cost: $${operationalCost.toFixed(2)}`, fuelWidth + maintenanceWidth + operationalWidth / 2 - 90, canvas.height / 2);
+
+        // Chart label
+        const labelDiv = document.getElementById('chart-label');
+        labelDiv.innerHTML = `
+            <div style="display: inline-block; width: 20px; height: 20px; background: red; margin-right: 5px;"></div> Fuel Cost
+            <div style="display: inline-block; width: 20px; height: 20px; background: green; margin-right: 5px; margin-left: 10px;"></div> Maintenance Cost
+            <div style="display: inline-block; width: 20px; height: 20px; background: blue; margin-right: 5px; margin-left: 10px;"></div> Operational Cost
+        `;
     }
 </script>
 
