@@ -1,9 +1,9 @@
 // @author peterpaleev
 // @title flame microphone 
 
-import { clamp, map } from '/src/modules/num.js'
-import { CSS4 } from '/src/modules/color.js'
-import { mix, smoothstep } from '/src/modules/num.js'
+import { clamp, map } from '/flames/src/modules/num.js'
+import { CSS4 } from '/flames/src/modules/color.js'
+import { mix, smoothstep } from '/flames/src/modules/num.js'
 
 export const settings = { fps: 30, backgroundColor: 'black', color: 'white' }
 
@@ -181,7 +181,7 @@ function valueNoise() {
 
 
 
-import { drawInfo } from '/src/modules/drawbox.js'
+// import { drawInfo } from '/src/modules/drawbox.js'
 // export function post(context, cursor, buffer) {
 //     drawInfo(context, cursor, buffer)
 // }
