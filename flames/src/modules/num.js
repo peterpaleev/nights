@@ -31,6 +31,14 @@ export function clamp(v, min, max) {
 	return v
 }
 
+// Returns random value between min max 
+export function clampRand(v, min, max) {
+	if (v < min) return min
+	if (v > max) return max
+	return v
+}
+
+
 // Returns -1 for negative numbers, +1 for positive numbers, 0 for zero
 export function sign(n) {
 	if (n > 0) return  1

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Test single</title>
-	<link rel="stylesheet" type="text/css" href="/flames/simple_console.css">
+	<link rel="stylesheet" type="text/css" href="/simple_console.css">
 	<style type="text/css" media="screen">
 		html, body {
 			padding: 0;
@@ -27,8 +27,8 @@
 <body>
 	<pre></pre>
 	<script type="module">
-		import { run } from '/flames/run.js'
-		import * as program from '/flames/flame_microphone.js'
+		import { run } from '/run.js'
+		import * as program from '/flame_microphone_n.js'
 		run(program, { element : document.querySelector('pre') }).then(function(e){
 			console.log(e)
 		}).catch(function(e) {

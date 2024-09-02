@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Distribution Visualizer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #controls {
+            margin: 20px;
+        }
+        #canvasContainer {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label>Room Width (m): <input type="number" id="roomWidth" value="10"></label>
+        <label>Room Height (m): <input type="number" id="roomHeight" value="10"></label>
+        <label>Subwoofer 1 X: <input type="number" id="sub1X" value="2"></label>
+        <label>Subwoofer 1 Y: <input type="number" id="sub1Y" value="5"></label>
+        <label>Subwoofer 1 Direction: <input type="number" id="sub1Dir" value="45"></label>
+        <label>Subwoofer 2 X: <input type="number" id="sub2X" value="8"></label>
+        <label>Subwoofer 2 Y: <input type="number" id="sub2Y" value="5"></label>
+        <label>Subwoofer 2 Direction: <input type="number" id="sub2Dir" value="135"></label>
+        <button id="update">Update</button>
+    </div>
+    <div id="canvasContainer">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+        <script src="script.js"></script>
+    </div>
+</body>
+</html>
